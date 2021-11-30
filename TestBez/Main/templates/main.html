@@ -1,0 +1,83 @@
+{% load static %}
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="{% static 'css/End.css'%}" type="text/css">
+    <script src="{% static 'js/jquery-3.6.0.min.js'%}"></script>
+    <script src="{% static 'js/fin.js'%}"></script>
+</head>
+<body>
+<div class="header">
+</div>
+
+<table class='status'>
+</table>
+<br>
+<table class='information'>
+</table>
+
+<script>
+var data  = {'csrfmiddlewaretoken': '{{csrf_token}}'}
+var dict_key = ['colorDepth', 'hardwareConcurrency', 'screenResolution[]', 'timezone', 'platform', 'webgl','data','extensions','webgl shading language version','webgl version','webgl shading language version','webgl vendor','webgl renderer']
+$('.information').append('<caption> Данные для отпечатка: </caption>')
+$(document).ready(function(){
+	 Fingerprint2.get(function (components) {
+          for (let i = 0; i < components.length; i++) {
+            if (components[i].key == 'colorDepth' || components[i].key == 'hardwareConcurrency' || components[i].key == 'screenResolution' || components[i].key == 'timezone' || components[i].key == 'platform'){
+            data[components[i].key] = components[i].value;
+
+
+            $('.information').append('<tr>');
+            $('.information').append('<td>' + components[i].key+ '<td>' );
+            $('.information').append('<td>' + components[i].value + '<td>' );
+            $('.information').append('<tr>')
+            continue
+            }
+
+
+            if (components[i].value == null){
+                continue
+            };
+            for (let g = 0;g < components[i].value.length;g++){
+                if (i == 19) {
+                    if (components[i].value[g].split(':')[0] != 'webgl shading language version' && components[i].value[g].split(':')[0] != 'webgl renderer' && components[i].value[g].split(':')[0]!= 'webgl vendor' && components[i].value[g].split(':')[0]!= 'webgl version' && components[i].value[g].split(':')[0]!= 'data' && components[i].value[g].split(':')[0]!= 'extensions'){
+                        data[components[i].value[g].split(':')[0]] = components[i].value[g].split(':')[1]
+                             $('.information').append('<tr>');
+                             $('.information').append('<td>' + components[i].value[g].split(':')[0]+ '<td>' );
+                             $('.information').append('<td>' + components[i].value[g].split(':')[1] + '<td>' );
+                             $('.information').append('<tr>')
+                    };
+                }
+
+            }
+          }
+            $.ajax({
+            type: 'POST',
+            url: "{% url 'main' %}",
+            data,
+            success: function (response) {
+                if (response.result != 'tor'){
+                if (response.result == 'new'){
+                    $('.header').append('<h1> Добро пожаловать! </h1>');
+                }else{
+                    $('.header').append('<h1> Добро пожаловать,</h1> <p> снова </p>');
+                }
+                $('.status').append('<tr> <td>  Ваш IP: <td> <td>' + response.ip  + '<td> <tr>');
+                $('.status').append('<tr> <td>  Ваш Хэш: <td> <td>' + response.hash  + '<td> <tr>');
+                $('.status').append('<tr> <td>  Proxy/VPN: <td> <td>' + response.vpn  + '<td> <tr>');
+                $('.status').append('<tr> <td>  Tor: <td> <td>' + response.tor  + '<td> <tr>');
+
+
+                }
+                else{
+                    $('.header').append('<h1> Вы зашли через TOR! </h1> <p> На этом полезная информация заканчивается </p>');
+                }
+            },
+        })
+        })
+    })
+</script>
+</html>
